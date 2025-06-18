@@ -1,5 +1,10 @@
-fastapi
+fastapi>=0.110
 uvicorn
 twilio
 openai
 python-multipart
+requests
+pytest
+httpx<0.25
+python-dotenv
+relevanceai
