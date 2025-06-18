@@ -77,3 +77,167 @@ def incoming(request: Request):
     vr.append(g)
     return Response(str(vr), media_type="application/xml")
 
+def lookup_customer(name: str, phone: str) -> dict:
+    key = os.getenv("DATA_API_KEY")
+    if not key:
+        return {}
+    try:
+        resp = requests.get(
+            "https://api.peopledatalabs.com/v5/person/enrich",
+            params={"name": name, "phone": phone, "api_key": key},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        return resp.json()
+    except Exception as e:
+        logging.error("lookup failed", exc_info=e)
+        return {}
+
+def log_to_crm(summary: dict, intel: dict) -> None:
+    key = os.getenv("CRM_API_KEY")
+    crm_url = os.getenv("CRM_URL")
+    if not key or not crm_url:
+        return
+    payload = {
+        "full_name": summary.get("full_name"),
+        "phone": summary.get("phone"),
+        "case_reason": summary.get("case_reason"),
+        "intel": intel,
+    }
+    try:
+        requests.post(
+            crm_url,
+            headers={"Authorization": f"Bearer {key}"},
+            json=payload,
+            timeout=10,
+        ).raise_for_status()
+    except Exception as e:
+        logging.error("CRM logging failed", exc_info=e)
+
+@app.post("/capture")
+def capture(request: Request, SpeechResult: str = Form(None)):
+    summary = None
+    if SpeechResult:
+        prompt = "Return JSON: {full_name, phone, case_reason}"
+        if rai_auth:
+            content = rai_chat(prompt, SpeechResult)
+            if content:
+                try:
+                    summary = json.loads(content)
+                except Exception as e:
+                    logging.error("Relevance AI parse error", exc_info=e)
+        if summary is None and openai_client:
+            try:
+                chat = openai_client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": prompt},
+                        {"role": "user", "content": SpeechResult},
+                    ],
+                    temperature=0,
+                )
+                summary = json.loads(chat.choices[0].message.content)
+            except Exception as e:
+                logging.error("OpenAI error", exc_info=e)
+        if summary:
+            intel = lookup_customer(summary.get("full_name"), summary.get("phone"))
+            log_to_crm(summary, intel)
+            logging.info("NEW INTAKE → %s", summary)
+        else:
+            logging.warning("Could not parse speech")
+
+    vr = VoiceResponse()
+    vr.pause(length=1)
+    if SpeechResult:
+        if openai_client:
+            vr.play(_speech_url(request, "Thank you. Your information has been recorded. Goodbye."))
+        else:
+            vr.say("Thank you. Your information has been recorded. Goodbye.", voice="Polly.Joanna")
+    else:
+        if openai_client:
+            vr.play(_speech_url(request, "I did not receive any input. Goodbye."))
+        else:
+            vr.say("I did not receive any input. Goodbye.", voice="Polly.Joanna")
+    return Response(str(vr), media_type="application/xml")
+def lookup_customer(name: str, phone: str) -> dict:
+    key = os.getenv("DATA_API_KEY")
+    if not key:
+        return {}
+    try:
+        resp = requests.get(
+            "https://api.peopledatalabs.com/v5/person/enrich",
+            params={"name": name, "phone": phone, "api_key": key},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        return resp.json()
+    except Exception as e:
+        logging.error("lookup failed", exc_info=e)
+        return {}
+
+def log_to_crm(summary: dict, intel: dict) -> None:
+    key = os.getenv("CRM_API_KEY")
+    crm_url = os.getenv("CRM_URL")
+    if not key or not crm_url:
+        return
+    payload = {
+        "full_name": summary.get("full_name"),
+        "phone": summary.get("phone"),
+        "case_reason": summary.get("case_reason"),
+        "intel": intel,
+    }
+    try:
+        requests.post(
+            crm_url,
+            headers={"Authorization": f"Bearer {key}"},
+            json=payload,
+            timeout=10,
+        ).raise_for_status()
+    except Exception as e:
+        logging.error("CRM logging failed", exc_info=e)
+
+@app.post("/capture")
+def capture(request: Request, SpeechResult: str = Form(None)):
+    summary = None
+    if SpeechResult:
+        prompt = "Return JSON: {full_name, phone, case_reason}"
+        if rai_auth:
+            content = rai_chat(prompt, SpeechResult)
+            if content:
+                try:
+                    summary = json.loads(content)
+                except Exception as e:
+                    logging.error("Relevance AI parse error", exc_info=e)
+        if summary is None and openai_client:
+            try:
+                chat = openai_client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": prompt},
+                        {"role": "user", "content": SpeechResult},
+                    ],
+                    temperature=0,
+                )
+                summary = json.loads(chat.choices[0].message.content)
+            except Exception as e:
+                logging.error("OpenAI error", exc_info=e)
+        if summary:
+            intel = lookup_customer(summary.get("full_name"), summary.get("phone"))
+            log_to_crm(summary, intel)
+            logging.info("NEW INTAKE → %s", summary)
+        else:
+            logging.warning("Could not parse speech")
+
+    vr = VoiceResponse()
+    vr.pause(length=1)
+    if SpeechResult:
+        if openai_client:
+            vr.play(_speech_url(request, "Thank you. Your information has been recorded. Goodbye."))
+        else:
+            vr.say("Thank you. Your information has been recorded. Goodbye.", voice="Polly.Joanna")
+    else:
+        if openai_client:
+            vr.play(_speech_url(request, "I did not receive any input. Goodbye."))
+        else:
+            vr.say("I did not receive any input. Goodbye.", voice="Polly.Joanna")
+    return Response(str(vr), media_type="application/xml")
