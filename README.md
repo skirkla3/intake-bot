@@ -35,10 +35,10 @@ Create a `.env` file (not committed) with at least the following keys and their 
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/render-examples/fastapi)
 ```
-OPENAI_API_KEY=your-openai-key
-RELEVANCEAI_API_KEY=your-relevanceai-key  # optional
-RELEVANCEAI_PROJECT=your-project          # optional
-RELEVANCEAI_REGION=your-region            # optional
+OPENAI_API_KEY=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
+RELEVANCEAI_API_KEY=sk-NmNlMzA1ZjUtZWRkYy00MzVmLWFiYzAtMjk5ODdmNTg3NTAx  
+RELEVANCEAI_PROJECT=bac27f8f6347-47c5-aed6-7800db3809e1         
+RELEVANCEAI_REGION=bcbe5a           
 DATA_API_KEY=your-data-lookup-key         # optional
 CRM_API_KEY=your-crm-key                  # optional
 CRM_URL=https://crm.example.com/leads     # optional
