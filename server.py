@@ -26,7 +26,7 @@ def capture(SpeechResult: str = Form(None)):
         prompt = "Return JSON: {full_name, phone, case_reason}"
         try:
             chat = openai.ChatCompletion.create(
-                model="o3-2025-04-30",
+                model="gpt-3.5-turbo",
                 messages=[{"role":"system","content":prompt},
                           {"role":"user","content":SpeechResult}],
                 temperature=0
